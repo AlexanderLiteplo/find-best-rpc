@@ -4,7 +4,7 @@ set -e
 
 CHAIN_NAME=${1:-"ethereum"}
 MAX_PARALLEL=5
-TIMEOUT=10
+TIMEOUT=0.8
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <chain_name>"
@@ -126,7 +126,9 @@ test_rpc() {
 index=0
 pids=()
 
-echo "$rpc_urls" | while read -r url; do
+readarray -t url_array <<< "$rpc_urls"
+
+for url in "${url_array[@]}"; do
     if [ -n "$url" ]; then
         test_rpc "$url" "$index" &
         pids+=($!)
@@ -139,7 +141,9 @@ echo "$rpc_urls" | while read -r url; do
     fi
 done
 
-wait
+if [ ${#pids[@]} -gt 0 ]; then
+    wait "${pids[@]}"
+fi
 
 echo ""
 echo "📊 Collecting results..."
